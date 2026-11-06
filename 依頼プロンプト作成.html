@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>依頼プロンプト作成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#2D6BE4; --pink:#E8508C; --orange:#F2862E; --red:#E2453C;
+  --paper:#F6F7FC; --sheet:#FFFFFF; --ink:#1E2440; --sub:#5E6585; --line:#E1E4F0; --soft:#F1F3FB;
+  --focus:var(--blue);
+  --bg:linear-gradient(160deg,#EEF3FF 0%,#FFF1F6 50%,#FFF4E8 100%);
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --blue:#6F9BFF; --pink:#FF7FAF; --orange:#FFA65C; --red:#FF7268;
+    --paper:#171B2B; --sheet:#1F2438; --ink:#ECEEF8; --sub:#A3A9C6; --line:#33395A; --soft:#272D46;
+    --bg:linear-gradient(160deg,#141A2E 0%,#22172A 55%,#261C16 100%); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --blue:#6F9BFF; --pink:#FF7FAF; --orange:#FFA65C; --red:#FF7268;
+  --paper:#171B2B; --sheet:#1F2438; --ink:#ECEEF8; --sub:#A3A9C6; --line:#33395A; --soft:#272D46;
+  --bg:linear-gradient(160deg,#141A2E 0%,#22172A 55%,#261C16 100%); color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper) var(--bg) fixed;min-height:100vh;color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+h1{font-family:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;font-weight:900;font-size:clamp(28px,6vw,38px);line-height:1.3;margin:0 0 6px;
+  display:inline-block;padding-bottom:6px;background:linear-gradient(90deg,var(--blue),var(--pink),var(--orange)) left bottom/100% 5px no-repeat}
+.lead{color:var(--sub);margin:6px 0 20px;max-width:40em}
+/* 流れ */
+.flow{list-style:none;padding:0;margin:0 0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;counter-reset:f}
+.flow li{min-width:0}
+.fstep{width:100%;font:inherit;text-align:left;display:flex;gap:10px;align-items:center;border-radius:10px;padding:9px 10px;border:1px solid var(--line);background:var(--sheet);color:var(--ink)}
+button.fstep{cursor:pointer}
+button.fstep:hover{border-color:var(--c)}
+.fstep .n{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:var(--c)}
+.fstep b{display:block;font-size:14px;line-height:1.4}
+.fstep small{display:block;font-size:11px;color:var(--sub);line-height:1.4}
+.fstep.self{background:transparent;border-style:dashed}
+.fstep.self .n{background:transparent;color:var(--sub);border:1.5px solid var(--sub)}
+button.fstep[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+button.fstep[aria-pressed="true"] small{color:#fff;opacity:.9}
+button.fstep[aria-pressed="true"] .n{background:rgba(255,255,255,.25)}
+.legend{font-size:12px;color:var(--sub);margin:-12px 0 18px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:18px 18px 6px;margin-bottom:18px;box-shadow:0 8px 24px -16px rgba(45,107,228,.25)}
+.sheet.top{border-top:6px solid var(--c,var(--blue))}
+h2{font-size:19px;margin:0 0 4px}
+.desc{color:var(--sub);font-size:14px;margin:0 0 14px}
+.field{margin-bottom:16px}
+.field label{display:block;font-weight:700;margin-bottom:4px}
+.field .help{display:block;color:var(--sub);font-size:13px;margin:-2px 0 6px}
+.shared{font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:2px}
+input[type=text],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:110px;resize:vertical}
+textarea.big{min-height:200px}
+.attach{background:var(--soft);border:1px dashed var(--sub);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--sub);margin-bottom:16px}
+.out textarea{min-height:280px;background:var(--paper);font-size:14px;line-height:1.7}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 14px}
+.act{font:inherit;font-weight:700;border-radius:8px;padding:10px 16px;cursor:pointer;border:1.5px solid var(--blue);background:var(--blue);color:#fff}
+.act.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.act.ghost:hover{border-color:var(--blue)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sheet);padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>依頼プロンプト作成</h1>
+  <p class="lead">noteとSNSの流れに沿って、AIに送るプロンプトを作ります。色の付いた工程を選び、空欄を埋めてコピーしてください。原稿・フレーズなど「共通」の欄は、一度入れれば次の工程にも引き継がれます。</p>
+
+  <ol class="flow" id="flow"></ol>
+  <p class="legend">点線の工程は、自分で作業する工程です。</p>
+
+  <div class="sheet top" id="form"></div>
+
+  <div class="sheet out">
+    <h2>できあがったプロンプト</h2>
+    <p class="desc">内容を確認してコピーし、AIに貼り付けてください。</p>
+    <textarea id="result" readonly aria-label="できあがったプロンプト"></textarea>
+    <div class="actions">
+      <button class="act" id="copy">プロンプトをコピー</button>
+      <button class="act ghost" id="clear">入力をすべて消す（次の記事へ）</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- テンプレート ---------- */
+const TEMPLATES = {
+"ポートフォリオ①ツール":
+`# ポートフォリオ①ツール｜〇〇を△△にするツール「□□」の作り方
+
+こんにちは、初心者マーケターまとです。
+
+結論から言うと、〇〇するだけで△△ができるツール「□□」を作りました。
+〇〇に困っている人が、今日から同じものを作れるように、作り方まで紹介します。
+
+【スライド】
+
+## 作ったきっかけ
+（自分が困った具体的な場面を1つ。そのとき感じたこと）
+
+## できること
+（読者目線で3〜4個。「〇〇を入れるだけで△△ができる」の形で）
+
+## すぐ真似できる作り方
+使ったもの：（ツール名・費用）
+1. （手順1）
+2. （手順2）
+3. （手順3）
+かかった時間：（〇時間）
+
+使ったプロンプト：
+（実際にAIに送った指示をそのまま）
+
+## 工夫したところ
+（こだわった点を1〜3個。なぜそうしたかも書く）
+
+## つまずいたところと学び
+（うまくいかなかったこと → どう解決したか、またはあきらめたか）
+今回の学び：（一文で）
+
+## 使うときの注意
+（費用・安全面・個人情報など）
+
+## さいごに
+（このツールで次にやりたいこと）
+
+【スライド】
+
+今日もまとの等身大の記録を読んでいただき、ありがとうございました。
+〇〇してもらえると、次の記事を書く励みになります。`,
+"ポートフォリオ②仕事":
+`# ポートフォリオ②仕事｜〇〇の案件で、△△を□□した話
+
+こんにちは、初心者マーケターまとです。
+
+結論から言うと、〇〇の案件で△△を経験し、□□が大事だと分かりました。
+これから副業を始める人が、最初の1件で迷わないための記録です。
+
+【スライド】
+
+## どんな仕事だったか
+種類：（リサーチ・データ整理など）
+使ったサービス：（クラウドワークス／ランサーズ）
+かかった時間：（〇時間）
+
+## 受けるまでにやったこと
+（探し方・提案文で工夫したこと）
+
+## 進め方
+1. （手順1）
+2. （手順2）
+3. （手順3）
+使ったツール・AI：（あれば）
+
+## つまずいたところと学び
+（うまくいかなかったこと → どう対応したか）
+今回の学び：（一文で）
+
+## 次の仕事で試すこと
+（具体的に1つ）
+
+【スライド】
+
+今日もまとの等身大の記録を読んでいただき、ありがとうございました。
+〇〇してもらえると、次の記事を書く励みになります。`,
+"学習":
+`〇〇学習△｜（テーマ）とは？初心者が□□で理解した
+こんにちは、初心者マーケターまとです。
+「〇〇学習」シリーズ第△回です。前回は（前回のテーマ）を学びました。
+結論から言うと、（今回のテーマ）は△△のことです。`
+};
+const SERIES_COLOR={"ポートフォリオ①ツール":"青","ポートフォリオ②仕事":"ピンク","学習":"オレンジ"};
+
+/* ---------- 入力欄（shared は工程をまたいで共通） ---------- */
+const FIELDS={
+  tpl:{label:"テンプレートの種類",type:"select",options:Object.keys(TEMPLATES),shared:true},
+  report:{label:"報告書",type:"textarea",big:true,help:"スプレッドシートの該当行（仕様書・感想・一言コメントなど）を貼り付け"},
+  neta:{label:"noteに入れたいネタ",type:"textarea",help:"報告書にない話題、伝えたいこと、思いついたエピソードなど"},
+  draft:{label:"note原稿",type:"textarea",big:true,shared:true,help:"今いちばん新しい原稿を貼り付け"},
+  phrases:{label:"フレーズ（3つ）",type:"text",shared:true,help:"⑤で作ったフレーズを読点「、」で区切って入力"},
+  title:{label:"記事タイトル",type:"text",shared:true},
+  url:{label:"noteの記事URL",type:"text",shared:true,help:"公開前なら空欄で大丈夫です"},
+  imgUse:{label:"画像の使い道",type:"select",options:["note見出し画像（1280×670）","Instagram投稿（1080×1350）","スライド1枚目（16:9）"]},
+  instaType:{label:"Instagramの形式",type:"select",options:["1枚画像","カルーセル（5枚）"]}
+};
+
+/* ---------- 流れ（prompt があるものだけ選べる） ---------- */
+const C={blue:"var(--blue)",pink:"var(--pink)",orange:"var(--orange)",red:"var(--red)"};
+const FLOW=[
+ {n:1,name:"note草案を作る",sub:"報告書＋ネタ＋テンプレート",c:C.blue,id:"draft",fields:["tpl","report","neta"],
+  build:v=>`あなたはnote記事の編集者です。以下の「報告書」と「入れたいネタ」をもとに、「テンプレート」の空欄（〇〇、△△、□□、かっこ内の説明）を埋め、読者に伝わるnote記事の草案を作ってください。
+
+# 書き方
+・報告書の言葉をそのまま並べない。メモ書きや言いかけの文は、意味を変えずに自然な文章に言い換え、誤字も直す
+・行間を埋める。項目どうしがつながるように、「なぜそうしたのか」「その結果どうなったか」を補い、段落の間につなぎの文を入れる
+・報告書から自然に読み取れる範囲の背景・理由・そのときの気持ちは、補ってよい
+・「入れたいネタ」は、テンプレートのいちばん合う見出しの中に入れる。合う見出しがなければ「さいごに」の前に短くまとめる
+・ただし、数字・固有名詞・実績・実際にしたことは作らない。どうしても足りない事実だけ、【要追記：何が必要か】と書いて残す
+
+# 守ること
+・テンプレートの見出しと順番は変えない
+・書き手は「初心者マーケターまと」、一人称は「私」、です・ます調
+・1文は短く、専門用語には一言の説明を付ける
+・「ギアを上げる」「最前線」などの決まり文句や大げさな表現は使わない
+
+# テンプレート（${v.tpl}）
+${TEMPLATES[v.tpl]||""}
+
+# 報告書
+${v.report||"（ここに報告書を貼る）"}
+
+# 入れたいネタ
+${v.neta||"（なし）"}
+
+# 出力の形
+1. 草案
+2. 草案のあとに「補ったところ」という見出しを付け、報告書になかった内容を補った文を5つまで箇条書きで示す`},
+ {n:2,name:"自分で編集する",sub:"事実の確認・言い回しの調整",self:true},
+ {n:3,name:"note用の原稿に仕上げる",sub:"そのまま貼れる形にする",c:C.blue,id:"final",fields:["draft"],
+  build:v=>`以下のnote原稿を、noteの編集画面にそのまま貼り付けて使える完成原稿に仕上げてください。
+
+# 仕上げのルール
+・Markdownの記号（#、**、- など）は使わない。noteに貼ったときに記号が文字として残るため
+・大見出しの行は先頭に「■ 」、小見出しの行は先頭に「▶ 」を付け、その行には見出しの文だけを書く
+・箇条書きは「・」で始める。番号付きの手順は「1. 」「2. 」で始める
+・1段落は3文以内。段落と段落の間は1行空ける
+・【要追記】【スライド】など、作業用の印は本文から消す
+・内容・数字・体験は変えない。誤字・言い回しのねじれ・同じ言葉の重複だけ直す
+
+# 出力の形
+1. 完成原稿（このまま貼れる本文だけ。前置きや説明は書かない）
+2. 完成原稿のあとに「確認してほしいところ」という見出しを付け、事実が足りない・あいまいな箇所があれば箇条書きで示す（なければ「なし」）
+
+# 原稿
+${v.draft||"（ここに原稿を貼る）"}`},
+ {n:4,name:"レイアウトのアドバイス",sub:"表・画像・太字の提案",c:C.orange,id:"advice",fields:["draft"],
+  build:v=>`以下のnote原稿を読み、読みやすくするためのレイアウトのアドバイスをください。原稿そのものは書き直さず、アドバイスだけを出してください。
+
+# 見てほしいこと
+・表にしたほうが分かりやすいところ（比べている内容、手順、一覧など）。表にするなら列の名前も提案する
+・画像・スクリーンショット・スライドを入れたほうがよいところと、何を入れるとよいか
+・太字にするとよい一文（記事全体で3か所まで）
+・長すぎる段落、見出しが足りないところ、見出しの言葉が分かりにくいところ
+・スマホで読んだときに読みにくくなりそうなところ
+・ファイル（PDFなど）やリンクを置くのにちょうどよい場所
+
+# 出力の形
+次の列の表で、原稿の上から順に並べてください。
+| 場所（見出し名と、その段落の書き出し） | 提案 | 理由 |
+最後に、いちばん効果が大きい提案を1つだけ選び、その理由を一文で書いてください。
+
+# 原稿
+${v.draft||"（ここに原稿を貼る）"}`},
+ {n:5,name:"フレーズを3つ作る",sub:"画像に入れる言葉",c:C.orange,id:"phrase",fields:["draft","title"],
+  build:v=>`以下のnote原稿から、画像に入れるためのフレーズを3つ作ってください。
+
+# 条件
+・1つ15文字以内。スマホの小さい画面でも、ひと目で読める長さにする
+・3つのうち1つは記事の結論、1つは読者の悩みに寄りそう言葉、1つは数字や具体的なことばを入れる
+・原稿に書かれている内容から作る。原稿にない数字や実績は入れない
+・誇張や決まり文句は使わない
+
+# 出力の形
+1. フレーズ：どの画像に向いているか（noteの見出し画像／Instagram／X）と、その理由（一文）
+2. フレーズ：同上
+3. フレーズ：同上
+最後に、3つを読点「、」でつないだ1行も出してください。
+
+# 記事タイトル
+${v.title||"（記事タイトル）"}
+
+# 原稿
+${v.draft||"（ここに原稿を貼る）"}`},
+ {n:6,name:"画像にフレーズを入れる",sub:"いつもの画像を使う",c:C.pink,id:"img",fields:["phrases","title","tpl","imgUse"],attach:true,
+  build:v=>`添付した画像に、文字を入れてください。
+
+# 入れる文字
+・メイン：${v.phrases||"（フレーズ3つ）"}
+・サブ（小さめ）：${v.title||"（記事タイトル）"}
+・右下にごく小さく：初心者マーケターまと
+
+# 条件
+・画像の用途：${v.imgUse}
+・元の画像の主役（人・物・画面）に文字をかぶせない
+・スマホの小さい画面でも読める太さと大きさにする
+・文字が読みにくい場合は、文字の後ろに半透明の帯を敷く
+・アクセントカラーは${SERIES_COLOR[v.tpl]||"青"}系にする
+・フレーズ以外の文字や装飾は足さない
+・元の画像の内容は変えない`},
+ {n:7,name:"noteを作る",sub:"原稿・画像・ファイルを入れる",self:true},
+ {n:8,name:"noteに投稿する",sub:"",self:true},
+ {n:9,name:"Instagram用の画像を作る",sub:"フレーズに合う画像",c:C.pink,id:"insta",fields:["phrases","title","tpl","instaType","draft"],
+  build:v=>`以下のフレーズに合う、Instagram投稿用の画像を新しく作ってください。
+
+# 形式
+${v.instaType==="カルーセル（5枚）"
+? `カルーセル5枚（各1080×1350）
+1枚目：フレーズの1つ目を大きく
+2〜4枚目：原稿の要点を1枚1つずつ（1枚40字以内）。2〜3枚目にはフレーズの2つ目・3つ目を使う
+5枚目：「続きはnoteで」と「初心者マーケターまと」`
+: `1枚（1080×1350）
+フレーズの中から1つを大きく配置し、雰囲気をフレーズに合わせる`}
+
+# フレーズ
+${v.phrases||"（フレーズ3つ）"}
+
+# デザインの条件
+・フレーズの内容が、絵や配色でも伝わるようにする
+・アクセントカラーは${SERIES_COLOR[v.tpl]||"青"}系
+・文字はスマホで読める大きさ。1枚に情報を詰めすぎない
+・右下に小さく「初心者マーケターまと」
+・原稿にない内容や数字は入れない
+
+# 記事タイトル
+${v.title||"（記事タイトル）"}
+
+# 原稿（要点の参考）
+${v.draft||"（ここに原稿を貼る）"}
+
+画像のあとに、投稿の本文（150字以内）とハッシュタグ5つも提案してください。`},
+ {n:10,name:"LinkedInの短文を作る",sub:"原稿から",c:C.red,id:"li",fields:["draft","url"],
+  build:v=>`以下のnote原稿をもとに、LinkedIn用の短い投稿文を作ってください。
+
+# 書き手
+来春MAツール企業に入社予定の大学4年生「初心者マーケターまと」。等身大の成長を公開している。
+
+# 条件
+・200字前後、日本語
+・1行目で目を引く（問いかけ、または結果の数字）
+・「何をしたか → 何を学んだか」の順に、2〜3文で書く
+・ビジネス向けの丁寧さは保ちつつ、背伸びした表現や誇張はしない
+・原稿にない実績や数字は書かない
+・最後に記事リンク：${v.url||"（noteのURL）"}
+・ハッシュタグは3個まで
+
+トーンを変えて2案出してください。
+
+# 原稿
+${v.draft||"（ここに原稿を貼る）"}`},
+ {n:11,name:"Instagram・LinkedInに投稿",sub:"",self:true}
+];
+const TASKS=FLOW.filter(f=>!f.self);
+
+/* ---------- 状態 ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function load(){try{return JSON.parse(localStorage.getItem("prompt:v2")||"{}")}catch(e){return {}}}
+function save(){try{localStorage.setItem("prompt:v2",JSON.stringify(state))}catch(e){}}
+let state=Object.assign({values:{}},load());
+let current=null;
+function val(k){const f=FIELDS[k];const v=state.values[k];return (v!==undefined&&v!=="")?v:(f.type==="select"?f.options[0]:"")}
+
+$("flow").innerHTML=FLOW.map(f=>f.self
+  ?`<li><div class="fstep self"><span class="n">${f.n}</span><span><b>${esc(f.name)}</b>${f.sub?`<small>${esc(f.sub)}</small>`:""}</span></div></li>`
+  :`<li><button class="fstep" style="--c:${f.c}" data-id="${f.id}" aria-pressed="false"><span class="n">${f.n}</span><span><b>${esc(f.name)}</b><small>${esc(f.sub)}</small></span></button></li>`).join("");
+$("flow").addEventListener("click",e=>{const b=e.target.closest("button.fstep");if(!b)return;location.hash=b.dataset.id;select(b.dataset.id)});
+
+function select(id){
+  const t=TASKS.find(x=>x.id===id)||TASKS[0]; current=t;
+  document.querySelectorAll("button.fstep").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===t.id));
+  $("form").style.setProperty("--c",t.c);
+  let h=`<h2>${t.n}. ${esc(t.name)}</h2><p class="desc">空欄を埋めると、下のプロンプトがすぐに更新されます。</p>`;
+  if(t.attach) h+=`<div class="attach">この工程は画像を作れるAI（GeminiやChatGPTなど）を使います。プロンプトを貼るときに、文字を入れたい画像ファイルも一緒に添付してください。</div>`;
+  t.fields.forEach(k=>{const f=FIELDS[k];
+    h+=`<div class="field"><label for="f-${k}">${esc(f.label)}${f.shared?'<span class="shared">共通</span>':""}</label>${f.help?`<span class="help">${esc(f.help)}</span>`:""}`;
+    if(f.type==="select") h+=`<select id="f-${k}" data-k="${k}">${f.options.map(o=>`<option${o===val(k)?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    else if(f.type==="textarea") h+=`<textarea id="f-${k}" data-k="${k}" class="${f.big?"big":""}"></textarea>`;
+    else h+=`<input type="text" id="f-${k}" data-k="${k}">`;
+    h+=`</div>`;});
+  $("form").innerHTML=h;
+  t.fields.forEach(k=>{const el=$("f-"+k); if(FIELDS[k].type!=="select") el.value=val(k);
+    ["input","change"].forEach(ev=>el.addEventListener(ev,()=>{state.values[k]=el.value;save();render()}));});
+  render();
+}
+function render(){const v={};Object.keys(FIELDS).forEach(k=>v[k]=val(k));$("result").value=current.build(v)}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
+$("copy").addEventListener("click",async()=>{
+  const text=$("result").value; let ok=false;
+  try{await navigator.clipboard.writeText(text);ok=true}catch(e){const r=$("result");r.focus();r.select();try{ok=document.execCommand("copy")}catch(_){}}
+  toast(ok?"コピーしました":"選択された文字をコピーしてください");
+});
+$("clear").addEventListener("click",()=>{
+  if(!confirm("入力した内容をすべて消して、次の記事用にしますか？"))return;
+  state={values:{}};save();select(current.id);toast("消しました");
+});
+window.addEventListener("hashchange",()=>select(location.hash.slice(1)));
+select(location.hash.slice(1)||"draft");
+</script>
+</body>
+</html>
